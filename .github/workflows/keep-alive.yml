@@ -13,7 +13,7 @@ jobs:
         project:
           - name: Track2Link          # a friendly name
             ref: clfndnqtihioqheubzmx # <-- your project ref (from URL)
-            secret_name: TRACK2LINK_ANON_KEY
+            secret_name: TRACK2LINK
           # add more projects here if needed
     steps:
       - name: Ping ${{ matrix.project.name }}
