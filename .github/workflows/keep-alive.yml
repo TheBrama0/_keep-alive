@@ -11,10 +11,9 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: Track2Link          # a friendly name
-            ref: clfndnqtihioqheubzmx # <-- your project ref (from URL)
-            secret_name: TRACK2LINK
-          # add more projects here if needed
+          - name: Track2Link
+            ref: clfndnqtihioqheubzmx   # <-- your project ID (from Supabase URL)
+            secret_name: TRACK2LINK_ANON_KEY
     steps:
       - name: Ping ${{ matrix.project.name }}
         run: |
