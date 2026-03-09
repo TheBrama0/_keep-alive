@@ -1,0 +1,27 @@
+name: Keep Supabase Projects Alive
+
+on:
+  schedule:
+    # Runs every day at 9:00 UTC – adjust as needed
+    - cron: '0 9 * * *'
+  workflow_dispatch:   # allows manual trigger from GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - name: project-alpha
+            ref: abcdefghijklm   # your first project ref
+          - name: project-beta
+            ref: nopqrstuvwxyz   # your second project ref
+          # Add more projects as needed
+    steps:
+      - name: Call ping_keep_alive for ${{ matrix.project.name }}
+        run: |
+          curl -X POST 'https://${{ matrix.project.ref }}.supabase.co/rest/v1/rpc/ping_keep_alive' \
+               -H 'apikey: ${{ secrets[format('{0}_ANON_KEY', matrix.project.name | upper | replace('-', '_'))] }}' \
+               -H 'Authorization: Bearer ${{ secrets[format('{0}_ANON_KEY', matrix.project.name | upper | replace('-', '_'))] }}' \
+               -H 'Content-Type: application/json' \
+               -d '{}'
