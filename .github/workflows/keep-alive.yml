@@ -11,13 +11,15 @@ jobs:
     strategy:
       matrix:
         project:
-
-
           - name: Track2Link v1.1
             ref: xzcotxqdrhfzadlpbxwq
             secret_name: TRACK2LINK_ANON_KEY_V1_1
-            
     steps:
+      # 1. Checkout the repository so we can commit files
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Ping the keep-alive RPC
       - name: Ping ${{ matrix.project.name }}
         run: |
           curl -X POST 'https://${{ matrix.project.ref }}.supabase.co/rest/v1/rpc/ping_keep_alive' \
@@ -26,19 +28,20 @@ jobs:
                -H 'Content-Type: application/json' \
                -d '{}'
 
-      # After pinging, fetch the updated data and save as JSON
+      # 3. Fetch the updated status and save as JSON in docs/data/
       - name: Fetch status and save to JSON
         run: |
+          mkdir -p docs/data
           curl -s -X GET 'https://${{ matrix.project.ref }}.supabase.co/rest/v1/keep_alive?select=last_ping,uptime_days' \
                -H 'apikey: ${{ secrets[matrix.project.secret_name] }}' \
                -H 'Authorization: Bearer ${{ secrets[matrix.project.secret_name] }}' \
-               | jq '.' > status.json
+               | jq '.' > docs/data/status.json
 
-      # Upload the JSON as an artifact (optional, but we'll commit it)
-      - name: Commit status.json to the repo
+      # 4. Commit and push the updated JSON (only if changed)
+      - name: Commit and push status.json
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add status.json
-          git commit -m "Update status.json [skip ci]" || exit 0   # skip if no changes
+          git add docs/data/status.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update status.json [skip ci]"
           git push
