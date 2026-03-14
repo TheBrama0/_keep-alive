@@ -12,12 +12,12 @@ jobs:
       matrix:
         project:
           - name: Track2Link v1
-            ref: TRACK2LINK_ANON_KEY_1
-            secret_name: TRACK2LINK_ANON_KEY_1
+            ref: TRACK2LINK_PROJECT_URL_v1
+            secret_name: TRACK2LINK_ANON_KEY_v1
 
           - name: Track2Link v1.1
-            ref: TRACK2LINK_ANON_KEY_1.1
-            secret_name: TRACK2LINK_ANON_KEY_1.1
+            ref: TRACK2LINK_PROJECT_URL_v1.1
+            secret_name: TRACK2LINK_ANON_KEY_v1.1
             
     steps:
       - name: Ping ${{ matrix.project.name }}
