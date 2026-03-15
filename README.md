@@ -1,23 +1,30 @@
 # Keep‑Alive Monitor
 
-This repository contains an automated **keep‑alive** system for Supabase projects on the free tier. It prevents projects from being paused due to inactivity by scheduling a daily ping and displays the status on a public GitHub Pages dashboard.
+This repository automatically prevents your free‑tier projects from being paused due to inactivity. It uses **GitHub Actions** to ping your projects daily and displays the status on a public **GitHub Pages** dashboard.
 
-## How It Works
+---
 
-- A **GitHub Actions workflow** runs daily (scheduled) or can be triggered manually.
-- For each configured Supabase project, it:
+## 🚀 How It Works
+
+- A **GitHub Actions workflow** runs daily at **8:00 AM IST** (2:30 UTC) and can also be triggered manually.
+- For each project defined in the workflow matrix:
   1. Calls a PostgreSQL function `ping_keep_alive()` that updates a `keep_alive` table (incrementing `uptime_days` and setting `last_ping` to `now()`).
-  2. Fetches the latest `last_ping` and `uptime_days` from the table.
-  3. Saves all projects’ statuses into a single `docs/data/status.json` file.
-  4. Commits and pushes the updated JSON back to the repository.
+  2. Fetches the latest `last_ping` and `uptime_days`.
+  3. Saves the data as a JSON artifact.
+- A separate `combine` job merges all artifacts into a single `docs/data/status.json` file and commits it back to the repository.
+- **GitHub Pages** serves `docs/index.html`, which reads `status.json` and displays a clean dashboard showing each project’s last ping time and total uptime.
 
-- A **GitHub Pages** site serves `docs/index.html`, which reads `status.json` and displays a clean dashboard showing each project’s last ping time and uptime.
+---
 
-## Setup
+## 📁 Repository Structure
 
-### 1. Create the Supabase Table and Function
+---
 
-In each Supabase project, run the following SQL (e.g., in the SQL editor):
+## 🛠️ Setup Instructions
+
+### 1. Supabase Database Setup (per project)
+
+In **each** Supabase project, run the following SQL (e.g., in the SQL editor):
 
 ```sql
 -- Create keep_alive table (single row)
@@ -43,5 +50,5 @@ SECURITY DEFINER AS $$
   WHERE id = 1;
 $$;
 
--- Grant execute to anon role
+-- Grant execute to anon role (used by the workflow)
 GRANT EXECUTE ON FUNCTION public.ping_keep_alive() TO anon;
