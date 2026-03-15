@@ -2,7 +2,7 @@ name: Keep Supabase Projects Alive
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '30 2 * * *'   # 8:00 AM IST (2:30 UTC)
   workflow_dispatch:
 
 jobs:
@@ -11,28 +11,26 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: "Track2Link v1.1"
-            ref: xzcotxqdrhfzadlpbxwq
-            secret: TRACK2LINK_ANON_KEY_v1_1
-          - name: "Track2Link v1.1"
+          - name: "Track2Link v1.1 (clfndn)"
             ref: clfndnqtihioqheubzmx
             secret: TRACK2LINK_ANON_KEY_v1
-          # 👆 To add a new project, just copy-paste a block like above
-          #    and change name, ref, and secret name.
+          - name: "Track2Link v1.1 (xzcotx)"
+            ref: xzcotxqdrhfzadlpbxwq
+            secret: TRACK2LINK_ANON_KEY_V1_1
+          # 👇 To add a new project, copy a block above and change name/ref/secret
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Ping and fetch ${{ matrix.project.name }}
         run: |
-          # Get the secret value (GitHub injects it directly here)
           APIKEY="${{ secrets[matrix.project.secret] }}"
-          # Ping
+          # Ping the keep-alive function
           curl -X POST "https://${{ matrix.project.ref }}.supabase.co/rest/v1/rpc/ping_keep_alive" \
                -H "apikey: ${APIKEY}" \
                -H "Authorization: Bearer ${APIKEY}" \
                -H "Content-Type: application/json" -d '{}'
-          # Fetch status and add project name
+          # Fetch updated status and save with project name
           curl -s -X GET "https://${{ matrix.project.ref }}.supabase.co/rest/v1/keep_alive?select=last_ping,uptime_days" \
                -H "apikey: ${APIKEY}" \
                -H "Authorization: Bearer ${APIKEY}" \
@@ -59,7 +57,6 @@ jobs:
       - name: Merge JSON files
         run: |
           mkdir -p docs/data
-          # Merge all JSON files (each is an array of one object) into one array
           jq -s 'add' artifacts/*/status-*.json > docs/data/status.json
 
       - name: Commit and push status.json
