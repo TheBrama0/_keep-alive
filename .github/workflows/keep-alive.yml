@@ -2,7 +2,7 @@ name: Keep Supabase Projects Alive
 
 on:
   schedule:
-    - cron: '30 2 * * *'   # 8:00 AM IST (2:30 UTC)
+    - cron: '30 0 * * *'   # 8:00 AM IST (2:30 UTC)
   workflow_dispatch:
 
 jobs:
