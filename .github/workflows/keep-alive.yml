@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: "Track2Link v1"
+          - name: "Track2Link main"
             ref: clfndnqtihioqheubzmx
             secret: TRACK2LINK_ANON_KEY_v1
           - name: "Track2Link v1 (march 2026 final ver)"
