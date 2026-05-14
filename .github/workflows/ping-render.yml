@@ -9,30 +9,35 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ping Render and capture status
+      - name: Ping Render health endpoint and capture status
         id: ping
         run: |
+          # Use full URL without custom port – Render serves HTTPS on standard port 443
           HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" "https://track2link.onrender.com/status/keepalive")
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Ping returned HTTP $HTTP_CODE at $TIMESTAMP"
 
-      - name: Update render-status.json
+      - name: Save status to JSON file
         run: |
           mkdir -p docs/data
-          echo '{
+          cat > docs/data/render-status.json << EOF
+          {
             "last_ping": "${{ steps.ping.outputs.timestamp }}",
             "http_status": ${{ steps.ping.outputs.http_code }},
-            "project": "Track2Link Backend (Render)"
-          }' > docs/data/render-status.json
+            "project": "Track2Link Backend (Render)",
+            "status": "${{ steps.ping.outputs.http_code == '200' && 'alive' || 'unreachable' }}"
+          }
+          EOF
 
-      - name: Commit and push render-status.json
+      - name: Commit and push updated status
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/data/render-status.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update Render status [skip ci]"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update Render backend status [skip ci]"
           git push
