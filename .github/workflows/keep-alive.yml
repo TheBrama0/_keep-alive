@@ -13,10 +13,10 @@ jobs:
         project:
           - name: "Track2Link main"
             ref: lysgaacjqpjqlfisjugd
-            secret: Track2Link webapp
+            secret: Track2Link_webapp
           - name: "Track2Link v1 app (march 2026 final ver)"
             ref: xzcotxqdrhfzadlpbxwq
-            secret: Track2Link app
+            secret: Track2Link_app
           # 👇 To add a new project, copy a block above and change name/ref/secret
     steps:
       - name: Checkout
