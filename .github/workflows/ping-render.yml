@@ -9,6 +9,30 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render health endpoint
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ping Render and capture status
+        id: ping
         run: |
-          curl -I -s -o /dev/null -w "%{http_code}\n" "track2link.onrender.com:10000/status/keepalive/health"
+          HTTP_CODE=$(curl -o /dev/null -s -w "%{http_code}" "https://track2link.onrender.com/status/keepalive")
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+      - name: Update render-status.json
+        run: |
+          mkdir -p docs/data
+          echo '{
+            "last_ping": "${{ steps.ping.outputs.timestamp }}",
+            "http_status": ${{ steps.ping.outputs.http_code }},
+            "project": "Track2Link Backend (Render)"
+          }' > docs/data/render-status.json
+
+      - name: Commit and push render-status.json
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/render-status.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update Render status [skip ci]"
+          git push
