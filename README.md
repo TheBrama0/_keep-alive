@@ -31,7 +31,6 @@ This repository automatically prevents your free‑tier **Supabase** projects an
 ---
 
 ## 📁 Repository Structure
-.
 ├── .github/workflows/
 
 │ ├── keep-alive.yml # Pings Supabase projects daily
