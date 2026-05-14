@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase Keep‑Alive Status</title>
+    <title>Keep‑Alive Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
         h1 { color: #333; }
@@ -16,40 +16,85 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .ok { color: #2e7d32; font-weight: bold; }
+        .warn { color: #ed6c02; font-weight: bold; }
+        .error { color: #c62828; font-weight: bold; }
         .time { font-family: monospace; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
-        .error { color: #c62828; }
         .loading { color: #666; font-style: italic; }
     </style>
 </head>
 <body>
-    <h1>🚀 Supabase Keep‑Alive Dashboard</h1>
+    <h1>🚀 Keep‑Alive Dashboard</h1>
     <div id="projects" class="loading">Loading status...</div>
 
     <script>
         async function loadStatus() {
             const container = document.getElementById('projects');
             try {
-                const response = await fetch('data/status.json');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const projects = await response.json();  // array of {project, last_ping, uptime_days}
-                
-                if (!projects || projects.length === 0) {
+                // Fetch both Supabase status and Render status
+                const [supabaseRes, renderRes] = await Promise.all([
+                    fetch('data/status.json'),
+                    fetch('data/render-status.json')
+                ]);
+
+                let allProjects = [];
+
+                // Process Supabase projects (status.json)
+                if (supabaseRes.ok) {
+                    const supabaseData = await supabaseRes.json();
+                    if (Array.isArray(supabaseData)) {
+                        allProjects.push(...supabaseData);
+                    }
+                } else {
+                    console.warn('Supabase status not available');
+                }
+
+                // Process Render backend (render-status.json)
+                if (renderRes.ok) {
+                    const renderData = await renderRes.json();
+                    // Ensure it's an object and add it as a single project
+                    if (renderData && typeof renderData === 'object') {
+                        allProjects.push(renderData);
+                    }
+                } else {
+                    console.warn('Render status not available');
+                }
+
+                if (allProjects.length === 0) {
                     container.innerHTML = '<p class="error">No project data available.</p>';
                     return;
                 }
-                
+
                 let html = '';
-                projects.forEach(p => {
-                    const lastPing = new Date(p.last_ping).toLocaleString();
+                for (const p of allProjects) {
+                    const lastPing = p.last_ping ? new Date(p.last_ping).toLocaleString() : 'Never';
+                    let statusHtml = '';
+                    let statusClass = 'ok';
+
+                    // Determine status display based on project type
+                    if (p.uptime_days !== undefined) {
+                        // Supabase project
+                        statusHtml = `✅ Active<br>Uptime days: ${p.uptime_days}`;
+                    } else if (p.http_status !== undefined) {
+                        // Render backend
+                        if (p.http_status === 200) {
+                            statusHtml = `✅ Alive (HTTP ${p.http_status})`;
+                            statusClass = 'ok';
+                        } else {
+                            statusHtml = `❌ Unreachable (HTTP ${p.http_status})`;
+                            statusClass = 'error';
+                        }
+                    } else {
+                        statusHtml = `🟢 Online`;
+                    }
+
                     html += `
                         <div class="project">
-                            <h2>${p.project}</h2>
-                            <p class="ok">✅ Active</p>
+                            <h2>${p.project || 'Unnamed Project'}</h2>
+                            <p class="${statusClass}">${statusHtml}</p>
                             <p>Last ping: <span class="time">${lastPing}</span></p>
-                            <p>Uptime days: ${p.uptime_days}</p>
                         </div>
                     `;
-                });
+                }
                 container.innerHTML = html;
             } catch (err) {
                 console.error('Failed to load status:', err);
@@ -58,8 +103,8 @@
         }
 
         loadStatus();
-        // Optional: refresh every minute
-        // setInterval(loadStatus, 60000);
+        // Refresh every 30 seconds to show near‑real‑time status
+        setInterval(loadStatus, 30000);
     </script>
 </body>
 </html>
